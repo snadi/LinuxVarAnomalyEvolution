@@ -1,0 +1,27 @@
+##Steps:
+
+* This assumes you already have Herodotos installed. See [http://coccinelle.lip6.fr/herodotos/herodotos.php](http://coccinelle.lip6.fr/herodotos/herodotos.php).
+
+* Create a subdirectory "kernel", and have a folder for each linux release you want to examine. The folder should have the kernel code and all the (un)dead files detected in that release.
+
+* Edit the releases in the linux.hc file
+
+* Edit the releases in the apply_herodotos script. Currently, the checking out of files and running of undertaker code are commented since we did them separately, but if you put them back in its supposed to automate the whole thing. 
+
+* Graphs, and results should be generated as well as an sql file which contains the entries of each detected correlation
+
+To generate sql data, go to the sqlstuff directory:
+
+* Go to initialise directory, and make sure the versions you want to analyze are the right one in versions.txt. 
+* Make sure that the common.sh has the right paths to your kernel releases containing the code and dead/undead files
+* make reinit-db
+* ./populate-files.sh
+* make populate-files
+* ./populate-funcs.sh
+* make populate-funcs
+* psql $(DBNAME) -f <NAME OF SQL FILE GENERATED FROM HERODOTOS>.sql
+* psql $(DBAME) -f myqueries.sql > herodotos_lifetime.csv
+
+##Results
+The results used in our MSR '13 paper are in the data folder
+

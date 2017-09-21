@@ -1,0 +1,8 @@
+The Data directory has moved.
+
+Please execute the following command to checkout the data:
+
+svn co https://www4.informatik.uni-erlangen.de/i4svn/papers/data/12/undertaker-returns/ Data
+
+This ensures that by default only the things that are really necessary
+to build the paper are checked out.

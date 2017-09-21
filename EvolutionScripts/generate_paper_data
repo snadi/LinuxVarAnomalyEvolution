@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# just generates the data/stats without re-running the analysis
+
+RELEASES="2.6.37
+2.6.38
+2.6.39
+3.0
+3.1
+3.2
+3.3
+3.4
+3.5
+3.6"
+
+rm ../../../Paper/paper_data.tex
+
+
+for release in $RELEASES
+do
+
+echo "Analyzing release $release"
+
+#extract Kconfig stats
+python ../../../Code/Scripts/GitScripts/extract-matched-stats.py --release $release --matches ../../../Data/feature_renames/Results/$release/filteredDefectCommitPairs_$release.dict --missing ../../../Data/feature_renames/Results/$release/missingFeatures_$release.dict --type Kconfig>> ../../../Paper/paper_data.tex
+
+#extract CPP stats
+python ../../../Code/Scripts/GitScripts/extract-matched-stats.py --release $release --matches ../../../Data/feature_renames/Results/$release/filteredDefectCPP_Pairs_$release.dict --missing ../../../Data/feature_renames/Results/$release/missingFeatures_$release.dict --type CPP >> ../../../Paper/paper_data.tex
+
+done
+
+#get typo analysis and extracted commit stats
+python extract-typo-stats.py --cppCommits ../../../Data/feature_renames/cpp_commits.dict --typos ../../../Data/feature_renames/Results/cpp_typo_commits.dict --kconfigCommits ../../../Data/feature_renames/feature-renames.dict >> ../../../Paper/paper_data.tex
+
+#get exploratory study stats
+python extract-exploratory-stats.py --database ../../../Data/ExploratoryCaseStudy/modified_trac.db >> ../../../Paper/paper_data.tex
+
+#get average lifetime from Herodotos data
+python ../../../Code/Scripts/GitScripts/get-avg-lifetime.py --herodotos ../../../Data/Herodotos/herodotos.csv --startrelease v2.6.31 --lastrelease v2.6.39 --tex ../../../Paper/paper_data.tex
+
+
+

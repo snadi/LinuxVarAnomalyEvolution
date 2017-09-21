@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#runs all the analysis needed for MSR 2013 paper. Run within the "Results" directory. 
+#Assumes you already extracted the Kconfig commits and CPP commits using git-log-feature-renames.py and git-log-cpp.py
+#Also assumes that missingfeatures have been extracted using extractMissingFeatures.py. 
+#This script does the mapping, typo analysis, and extracts statistics for everything including herodotos
+#You need to adjust the file paths according to your directory structure
+#this script also emits a .tex file that includes the reported stats in the paper
+
+RELEASES="2.6.37
+2.6.38
+2.6.39
+3.0
+3.1
+3.2
+3.3
+3.4
+3.5
+3.6"
+
+rm paper_data.tex
+
+
+for release in $RELEASES
+do
+
+echo "Analyzing release $release"
+
+
+#map defects to Kconfig commits
+python ../../../Code/Scripts/GitScripts/match-defect-to-commit.py --release v$release --renames ../feature-renames.dict --missing ./$release/missingFeatures_$release.dict > ./$release/defectCommitPairs_$release.dict
+
+#filter kconfig mapping to get unique mappings based on recency
+python ../../../Code/Scripts/GitScripts/filter-matches.py --release v$release --matches $release/defectCommitPairs_$release.dict > ./$release/filteredDefectCommitPairs_$release.dict
+
+#extract Kconfig stats
+python ../../../Code/Scripts/GitScripts/extract-matched-stats.py --release $release --matches ./$release/filteredDefectCommitPairs_$release.dict --missing ./$release/missingFeatures_$release.dict --type Kconfig>> paper_data.tex
+
+#filter make mapping to get unique mappings based on recency
+python ../../../Code/Scripts/GitScripts/filter-matches.py --release v$release --matches $release/defectCommitPairs_$release.dict > ./$release/filtereddefectMakeCommitPairs_$release.dict
+
+
+#map defects to CPP commits
+python match-defect-to-cpp_commit.py --release v$release --cpp ../cpp_commits.dict --missing ./$release/missingFeatures_$release.dict > ./$release/defectCPP_Pairs_$release.dict
+
+#filter CPP mapping to get unique mappings based on recency
+python filter-matches.py --release v$release --matches $release/defectCPP_Pairs_$release.dict > ./$release/filteredDefectCPP_Pairs_$release.dict
+
+#extract CPP stats
+python extract-matched-stats.py --release $release --matches ./$release/filteredDefectCPP_Pairs_$release.dict --missing ./$release/missingFeatures_$release.dict --type CPP >> paper_data.tex
+
+
+done
+
+#get typo analysis and extracted commit stats
+python extract-typo-stats.py --cppCommits ../cpp_commits.dict --kconfigCommits ../feature-renames.dict --typos cpp_typo_commits.dict >> paper_data.tex
+
+#get exploratory study stats
+python extract-exploratory-stats.py --database ../../ExploratoryCaseStudy/modified_trac.db >> Paper/paper_data.tex
+
+cd ../../Herodotos
+#get average lifetime from Herodotos data
+python get-avg-lifetime.py --herodotos herodotos.csv --startrelease v2.6.31 --lastrelease v2.6.39 --tex paper_data.tex
+
+
+
+
+
+
+
